@@ -1,4 +1,4 @@
-﻿const words = [
+const words = [
     {en:"State", pr:"стейт", tg:"давлат", ex:"The state has a new law."},
     {en:"Republic", pr:"рипаблик", tg:"ҷумҳурӣ", ex:"Tajikistan is a republic."},
     {en:"Law", pr:"ло", tg:"қонун", ex:"The law protects people."},
@@ -104,6 +104,8 @@ const state = {
     sentenceBank: [],
     sentenceAnswer: []
 };
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzEK-3rDjlFnSONbDBX-WR2p5JYR0uV3VZr0iLjsyFidk8JWe_GQdP0MrTe_plQTTyU/exec';
 
 const pageTabs = document.getElementById("pageTabs");
 const wordRows = document.getElementById("wordRows");
@@ -387,13 +389,11 @@ document.getElementById("exerciseJump").addEventListener("click", () => {
     document.getElementById("exerciseSection").scrollIntoView({ behavior: "smooth" });
 });
 
-// ИСТИНОДИ НАВИ СКРИПТИ ГУГЛ
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzEK-3rDjlFnSONbDBX-WR2p5JYR0uV3VZr0iLjsyFidk8JWe_GQdP0MrTe_plQTTyU/exec';
+// --- ФУНКСИЯҲОИ ФИРИСТОДАН ---
 
-// 1. ФИРИСТОДАНИ ТЕСТ
 function sendTestScoreOnly(studentName, scoreText, pageTitle) {
     const payload = {
-        action: "send_score",
+        action: "send_score",    // ✅ ин ҳамон амалест, ки сервер ба Telegram мефиристад
         name: studentName,
         score: scoreText,
         readingTitle: pageTitle
@@ -409,7 +409,8 @@ function sendTestScoreOnly(studentName, scoreText, pageTitle) {
     .catch(err => console.error("Хатогӣ:", err));
 }
 
-// 2. САБТИ ОВОЗ ВА ФИРИСТОДАН
+// --- САБТИ ОВОЗ ВА ФИРИСТОДАН ---
+
 let mediaRecorder = null;
 let audioChunks = [];
 let latestBase64Audio = null;
