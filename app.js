@@ -61,6 +61,23 @@ const words = [
     {en:"Mistake", pr:"мистейк", tg:"хато", ex:"Find your mistake and fix it."}
 ];
 
+const specialTopics = [
+    {
+        id: "self_intro",
+        title: "Self Introduction (Муаррифии худ)",
+        subtitle: "Мавзӯи махсус барои муаррифӣ дар идора ва ҷои кор",
+        sentences: [
+            { en: "Hello, my name is Ahmad.", pr: "Ҳэлоу, май нейм из Аҳмад", tg: "Салом, номи ман Аҳмад аст.", speechText: "Hello my name is Ahmad" },
+            { en: "I work at the Ministry of Internal Affairs as a police officer.", pr: "Ай ворк эт зэ Министри ов Интэрнэл Эфэрз эз э полис офисер", tg: "Ман дар ВКД ҳамчун корманди полис кор мекунам.", speechText: "I work at the Ministry of Internal Affairs as a police officer" },
+            { en: "I have been working here for 5 years.", pr: "Ай хэв бин воркинг хиэ фор файв йиэрз", tg: "Ман дар инҷо 5 сол боз кор мекунам.", speechText: "I have been working here for 5 years" },
+            { en: "I am from Tajikistan, from Dushanbe.", pr: "Ай эм фром Таҷикистан, фром Душанбе", tg: "Ман аз Тоҷикистон, аз Душанбе ҳастам.", speechText: "I am from Tajikistan from Dushanbe" },
+            { en: "I speak Tajik, Russian and I am learning English to be better in my job.", pr: "Ай спик Таҷик, Рашн энд ай эм лёрнинг Инглиш ту би бетер ин май ҷоб", tg: "Ман бо забонҳои тоҷикӣ, русӣ ҳарф мезанам ва англисиро барои беҳтар будан дар корам меомӯзам.", speechText: "I speak Tajik Russian and I am learning English to be better in my job" },
+            { en: "In my free time, I like reading and learning new things.", pr: "Ин май фри тайм ай лайк ридинг энд лёрнинг нию сингс", tg: "Дар вақти холии худ, ман хондан ва омӯхтани чизҳои навро дӯст медорам.", speechText: "In my free time I like reading and learning new things" },
+            { en: "Thank you.", pr: "Тэнк ю", tg: "Ташаккур.", speechText: "Thank you" }
+        ]
+    }
+];
+
 const readingTexts = [
     "Tajikistan is a republic with its own law. Every citizen has rights, and the government protects the people. My father works at the ministry, and our family lives in Dushanbe.",
     "People live in cities, towns, and villages. A citizen follows the law and respects the peace. The agent checks the building while soldiers stand straight.",
@@ -74,203 +91,347 @@ const pages = Array.from({ length: Math.ceil(words.length / pageSize) }, (_, ind
     items: words.slice(index * pageSize, (index + 1) * pageSize)
 }));
 
-const sentenceTasks = [
-    [
-        {tg:"Сардор гузоришро мехонад.", en:["The", "chief", "reads", "the", "report"]},
-        {tg:"Оилаи ман мактуб менависад.", en:["My", "family", "writes", "a", "letter"]},
-        {tg:"Ҳукумат қонунро ҳимоя мекунад.", en:["The", "government", "protects", "the", "law"]}
-    ],
-    [
-        {tg:"Шаҳрванд дар шаҳр зиндагӣ мекунад.", en:["The", "citizen", "lives", "in", "the", "city"]},
-        {tg:"Одамон ба деҳа меоянд.", en:["People", "come", "to", "the", "village"]},
-        {tg:"Агент биноро месанҷад.", en:["The", "agent", "checks", "the", "building"]}
-    ],
-    [
-        {tg:"Донишҷӯ ҷавоби дурустро менависад.", en:["The", "student", "writes", "the", "correct", "answer"]},
-        {tg:"Омӯзгор саволи осон медиҳад.", en:["The", "teacher", "asks", "an", "easy", "question"]},
-        {tg:"Дафтарро кушо ва калимаро навис.", en:["Open", "the", "notebook", "and", "write", "the", "word"]}
-    ]
-];
-
 const state = {
     page: 0,
-    round: 1,
-    unlocked: 1,
-    selected: {},
-    completed: {},
-    quiz: [],
-    write: [],
-    sentenceTask: null,
-    sentenceBank: [],
-    sentenceAnswer: []
+    activeTopicIndex: 0,
+    currentTab: 'words'
 };
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzEK-3rDjlFnSONbDBX-WR2p5JYR0uV3VZr0iLjsyFidk8JWe_GQdP0MrTe_plQTTyU/exec';
 
-const pageTabs = document.getElementById("pageTabs");
-const wordRows = document.getElementById("wordRows");
-const searchInput = document.getElementById("searchInput");
-const resultBox = document.getElementById("resultBox");
-const celebration = document.getElementById("celebration");
+function switchMainTab(tab) {
+    state.currentTab = tab;
+    const wordsSec = document.getElementById("wordsSection");
+    const topicsSec = document.getElementById("topicsSection");
+    const navWords = document.getElementById("navWordsBtn");
+    const navTopics = document.getElementById("navTopicsBtn");
 
-function shuffle(list) {
-    return [...list].sort(() => Math.random() - 0.5);
+    if (tab === 'words') {
+        if (wordsSec) wordsSec.style.display = "block";
+        if (topicsSec) topicsSec.style.display = "none";
+        if (navWords) navWords.classList.add("active");
+        if (navTopics) navTopics.classList.remove("active");
+    } else {
+        if (wordsSec) wordsSec.style.display = "none";
+        if (topicsSec) topicsSec.style.display = "block";
+        if (navWords) navWords.classList.remove("active");
+        if (navTopics) navTopics.classList.add("active");
+        renderSpecialTopics();
+    }
 }
 
-function compactEnglish(text) {
-    return text.trim().replace(/\s+/g, " ");
-}
+function renderSpecialTopics() {
+    const topicTabs = document.getElementById("topicTabs");
+    const topicContent = document.getElementById("topicContent");
+    if (!topicTabs || !topicContent) return;
 
-function getPageItems() {
-    return pages[state.page].items;
-}
-
-function renderTabs() {
-    pageTabs.innerHTML = pages.map((page, index) => `
-        <button class="page-tab" aria-current="${index === state.page}" onclick="changePage(${index})">
-            ${page.title}
+    topicTabs.innerHTML = specialTopics.map((topic, index) => `
+        <button class="page-tab ${index === state.activeTopicIndex ? 'active' : ''}" onclick="selectTopic(${index})">
+            📌 ${topic.title}
         </button>
     `).join("");
-}
 
-function renderPage() {
-    const page = pages[state.page];
-    document.getElementById("pageTitle").textContent = page.title;
-    document.getElementById("pageSubtitle").textContent = page.subtitle;
-    document.getElementById("wordCount").textContent = `${page.items.length} калима`;
-    document.getElementById("pageScore").textContent = page.title;
-    document.getElementById("tipNote").innerHTML = `<strong>Ёдгирӣ:</strong> аввал калимаро хонед, баъд талафуз ва мисолро бо овоз такрор кунед.`;
-    
-    const readingBox = document.getElementById("readingTextContent");
-    if (readingBox) {
-        readingBox.textContent = readingTexts[state.page] || readingTexts[0];
-    }
+    const currentTopic = specialTopics[state.activeTopicIndex];
 
-    searchInput.value = "";
-    renderRows(page.items);
-    resetExercises();
-    renderTabs();
-    updateProgress();
-}
+    topicContent.innerHTML = `
+        <div class="topic-header" style="margin-bottom: 20px;">
+            <h2>${currentTopic.title}</h2>
+            <p style="color: #666;">${currentTopic.subtitle}</p>
+        </div>
 
-function renderRows(items) {
-    wordRows.innerHTML = items.map((item, index) => `
-        <tr>
-            <td class="num">${index + 1}</td>
-            <td class="eng">${item.en}<button class="speak" onclick="speak('${item.en.replace(/'/g, "\\'")}')" title="Шунидани талафуз">▶</button></td>
-            <td class="pron">${item.pr}</td>
-            <td>${item.tg}</td>
-            <td class="example">${item.ex}</td>
-        </tr>
-    `).join("");
-}
+        <div class="sentences-list">
+            ${currentTopic.sentences.map((s, idx) => `
+                <div class="word-card-item" style="margin-bottom: 15px; padding: 15px; border-radius: 10px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div class="word-card-top">
+                        <div class="word-card-title">
+                            <span class="num">${idx + 1}.</span>
+                            <span class="eng" style="font-size: 1.1rem; font-weight: 600;">${s.en}</span>
+                        </div>
+                        <div class="audio-actions">
+                            <button class="speak" onclick="speak('${s.speechText.replace(/'/g, "\\'")}')" title="Шунидани овоз">🔊</button>
+                            <button class="mic-btn" onclick="testPronunciation('${s.speechText.replace(/'/g, "\\'")}', 'topic_status_${idx}')" title="Санҷиши овоз">🎤</button>
+                        </div>
+                    </div>
+                    <div class="word-card-body" style="margin-top: 8px;">
+                        <span class="pron" style="color: #2563eb; font-weight: 500;">[${s.pr}]</span>
+                    </div>
+                    <div class="example" style="margin-top: 5px; color: #4b5563;">
+                        💡 <strong>Тарҷума:</strong> ${s.tg}
+                    </div>
+                    <div class="voice-feedback" id="topic_status_${idx}"></div>
+                </div>
+            `).join("")}
+        </div>
 
-function resetExercises() {
-    state.round = 1;
-    state.unlocked = 1;
-    state.selected = {};
-    state.quiz = buildQuiz();
-    state.write = shuffle(getPageItems()).slice(0, 5);
-    state.sentenceTask = shuffle(sentenceTasks[state.page] || sentenceTasks[0])[0];
-    state.sentenceBank = shuffle(state.sentenceTask.en.map((text, index) => ({ id: `word_${state.page}_${index}`, text })));
-    state.sentenceAnswer = [];
-    resultBox.className = "result";
-    resultBox.textContent = "";
-    celebration.className = "celebration";
-    renderRounds();
-    renderQuiz();
-    renderWrite();
-    renderSentence();
-    showRound(1);
-}
-
-function buildQuiz() {
-    return shuffle(getPageItems()).slice(0, 5).map((item) => {
-        const wrong = shuffle(getPageItems().filter((word) => word.en !== item.en)).slice(0, 3).map((word) => word.en);
-        return { item, choices: shuffle([item.en, ...wrong]) };
-    });
-}
-
-function renderRounds() {
-    document.getElementById("rounds").innerHTML = [1, 2, 3].map((round) => {
-        const cls = round === state.round ? "active" : round <= state.unlocked ? "open" : "";
-        return `<span class="round-pill ${cls}">Даври ${round}</span>`;
-    }).join("");
-}
-
-function renderQuiz() {
-    document.getElementById("quizBox").innerHTML = state.quiz.map((q, index) => `
-        <div class="question">
-            <strong>${index + 1}. Тарҷумаи “${q.item.tg}” кадом аст?</strong>
-            <div class="choices">
-                ${q.choices.map((choice) => `
-                    <button class="choice-btn" data-question="${index}" data-choice="${choice}" onclick="selectChoice(${index}, '${choice.replace(/'/g, "\\'")}')">${choice}</button>
-                `).join("")}
+        <div class="reading-section" style="margin-top: 30px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <h3>🎙 Сабти пурраи матн барои муаллим</h3>
+            <p style="font-size: 0.95rem; color: #475569;">Лутфан ҳамаи ҷумлаҳои болоро бо овоз хонда, сабт кунед ва тугмаи фиристоданро зер кунед.</p>
+            <div style="margin: 15px 0;">
+                <button id="topicStartRecBtn" class="action-btn" onclick="startTopicRecording()">🔴 Оғози сабт</button>
+                <button id="topicStopRecBtn" class="action-btn" disabled onclick="stopTopicRecording()">⏹ Стоп</button>
             </div>
-        </div>
-    `).join("");
-}
-
-function renderWrite() {
-    document.getElementById("writeBox").innerHTML = state.write.map((item, index) => `
-        <div class="question">
-            <strong>${index + 1}. “${item.tg}” ба англисӣ чӣ мешавад?</strong>
-            <input class="write-input" id="write${index}" type="text" placeholder="English word">
-            <div class="correction" id="correction${index}"></div>
-        </div>
-    `).join("");
-}
-
-function renderSentence() {
-    const usedIds = state.sentenceAnswer.map((item) => item.id);
-    document.getElementById("sentenceTaskBox").innerHTML = `
-        <p class="sentence-target"><strong>Ҷумлаи тоҷикӣ:</strong> ${state.sentenceTask.tg}</p>
-        <div class="word-bank">
-            ${state.sentenceBank.map((item) => `
-                <button class="word-chip ${usedIds.includes(item.id) ? "used" : ""}" onclick="placeWord('${item.id}')" ${usedIds.includes(item.id) ? "disabled" : ""}>${item.text}</button>
-            `).join("")}
-        </div>
-        <div class="answer-line ${state.sentenceAnswer.length ? "" : "empty"}">
-            ${state.sentenceAnswer.map((item) => `
-                <button class="word-chip placed-chip" onclick="removeWord('${item.id}')" title="Баргардондан">${item.text}</button>
-            `).join("")}
+            <div id="topicRecStatus" style="font-weight: 500; margin-bottom: 10px;"></div>
+            <audio id="topicAudioPreview" controls style="display:none; width: 100%; margin-bottom: 10px;"></audio>
+            <button id="topicSendVoiceBtn" class="action-btn primary" style="display:none; background: #16a34a; color:#fff;" onclick="sendTopicVoice()">🚀 Фиристодан ба муаллим</button>
         </div>
     `;
 }
 
-function selectChoice(index, choice) {
-    state.selected[index] = choice;
-    document.querySelectorAll(`[data-question="${index}"]`).forEach((btn) => {
-        btn.classList.toggle("selected", btn.dataset.choice === choice);
+function selectTopic(index) {
+    state.activeTopicIndex = index;
+    renderSpecialTopics();
+}
+
+// СОХТОРИ МАШҚҲО
+let exerciseStep = 1; 
+let exerciseScore = 0;
+let isProcessingStep = false;
+let currentQuizList = [];
+let currentWriteList = [];
+let currentSentenceItem = null;
+let quizIndex = 0;
+let writeIndex = 0;
+let quizWord = null;
+let selectedChoice = null;
+let sentenceWords = [];
+let placedWords = [];
+
+function initExercise() {
+    exerciseStep = 1;
+    exerciseScore = 0;
+    isProcessingStep = false;
+    quizIndex = 0;
+    writeIndex = 0;
+    
+    const pageItems = [...pages[state.page].items].sort(() => Math.random() - 0.5);
+    currentQuizList = pageItems.slice(0, 5);
+    currentWriteList = pageItems.slice(5, 10);
+    currentSentenceItem = pageItems[10] || pageItems[0];
+
+    updateExerciseUI();
+}
+
+function updateExerciseUI() {
+    document.getElementById('resultBox').style.display = 'none';
+    const celebration = document.getElementById('celebration');
+    celebration.classList.remove('show');
+    celebration.innerHTML = "";
+    
+    const roundsContainer = document.getElementById('rounds');
+    if (roundsContainer) {
+        roundsContainer.innerHTML = `
+            <span class="round-pill ${exerciseStep <= 5 ? 'active' : 'open'}">Тестҳо (${Math.min(quizIndex + 1, 5)}/5)</span>
+            <span class="round-pill ${exerciseStep > 5 && exerciseStep <= 10 ? 'active' : (exerciseStep > 10 ? 'open' : '')}">Навиштан (${Math.min(writeIndex + 1, 5)}/5)</span>
+            <span class="round-pill ${exerciseStep === 11 ? 'active' : ''}">Ҷобаҷогузорӣ</span>
+        `;
+    }
+
+    document.getElementById('round1').style.display = (exerciseStep <= 5) ? 'block' : 'none';
+    document.getElementById('round2').style.display = (exerciseStep > 5 && exerciseStep <= 10) ? 'block' : 'none';
+    document.getElementById('round3').style.display = (exerciseStep === 11) ? 'block' : 'none';
+
+    if (exerciseStep <= 5) {
+        renderQuizStep();
+    } else if (exerciseStep > 5 && exerciseStep <= 10) {
+        renderWriteStep();
+    } else if (exerciseStep === 11) {
+        renderSentenceStep();
+    }
+}
+
+function renderQuizStep() {
+    quizWord = currentQuizList[quizIndex];
+    let options = [quizWord.tg];
+    while (options.length < 4) {
+        let randomItem = words[Math.floor(Math.random() * words.length)].tg;
+        if (!options.includes(randomItem)) options.push(randomItem);
+    }
+    options = options.sort(() => Math.random() - 0.5);
+
+    const box = document.getElementById('quizBox');
+    box.innerHTML = `
+        <div class="question">
+            <strong>Тест ${quizIndex + 1} аз 5. Тарҷумаи калимаро интихоб кунед:</strong>
+            <h4 style="font-size:1.5rem; color:#16324f; margin:10px 0;">${quizWord.en}</h4>
+        </div>
+        <div class="choices" id="choicesList">
+            ${options.map(opt => `<button class="choice-btn" onclick="selectChoice(this, '${opt}')">${opt}</button>`).join('')}
+        </div>
+    `;
+    selectedChoice = null;
+}
+
+function selectChoice(btn, choice) {
+    document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedChoice = choice;
+}
+
+function renderWriteStep() {
+    quizWord = currentWriteList[writeIndex];
+    const box = document.getElementById('writeBox');
+    box.innerHTML = `
+        <div class="question">
+            <strong>Навиштан ${writeIndex + 1} аз 5. Ин калима бо англисӣ чӣ мешавад?</strong>
+            <h4 style="font-size:1.5rem; color:#16324f; margin:10px 0;">${quizWord.tg}</h4>
+        </div>
+        <input type="text" class="write-input" id="writeInput" placeholder="Калимаи англисиро нависед..." autocomplete="off">
+        <div class="correction" id="writeCorrection">Ҷавоби дуруст: ${quizWord.en}</div>
+    `;
+}
+
+function renderSentenceStep() {
+    quizWord = currentSentenceItem;
+    const sentence = quizWord.ex.replace(/[.,]/g, '');
+    sentenceWords = sentence.split(' ').filter(w => w.length > 0);
+    let shuffled = [...sentenceWords].sort(() => Math.random() - 0.5);
+    placedWords = [];
+
+    const box = document.getElementById('sentenceTaskBox');
+    box.innerHTML = `
+        <div class="sentence-target"><strong>Ҷобаҷогузории ҷумла. Тарҷума:</strong> ${quizWord.tg} (Барои калимаи: ${quizWord.en})</div>
+        <p style="font-size:0.9rem; color:#666;">Ҷумларо бо тартиб созед:</p>
+        <div class="answer-line empty" id="answerLine"></div>
+        <div class="word-bank" id="wordBank">
+            ${shuffled.map((w, i) => `<button class="word-chip" id="chip_${i}" onclick="placeWord('${w.replace(/'/g, "\\'")}', ${i})">${w}</button>`).join('')}
+        </div>
+    `;
+}
+
+function placeWord(word, index) {
+    placedWords.push(word);
+    document.getElementById(`chip_${index}`).classList.add('used');
+    renderAnswerLine();
+}
+
+function renderAnswerLine() {
+    const line = document.getElementById('answerLine');
+    line.classList.remove('empty');
+    line.innerHTML = placedWords.map(w => `<span class="word-chip placed-chip">${w}</span>`).join('');
+}
+
+// ПЕШГИРИИ КЛИКИ ДУБОРА ВА ИҶРОИ ДУРУСТИ МАШҚҲО
+document.getElementById('checkBtn')?.addEventListener('click', () => {
+    if (isProcessingStep) return;
+
+    if (exerciseStep <= 5) {
+        if (!selectedChoice) return alert("Яке аз ҷавобҳоро интихоб кунед!");
+        isProcessingStep = true;
+        if (selectedChoice === quizWord.tg) {
+            exerciseScore++;
+            showResult(true, "✅ Офарин! Ҷавоб дуруст аст.");
+        } else {
+            showResult(false, `❌ Хато. Ҷавоби дуруст: ${quizWord.tg}`);
+        }
+        setTimeout(() => {
+            quizIndex++;
+            exerciseStep++;
+            isProcessingStep = false;
+            updateExerciseUI();
+        }, 1200);
+    } else if (exerciseStep > 5 && exerciseStep <= 10) {
+        const val = document.getElementById('writeInput').value.trim().toLowerCase();
+        if (!val) return alert("Калимаро нависед!");
+        isProcessingStep = true;
+        if (val === quizWord.en.toLowerCase()) {
+            exerciseScore++;
+            showResult(true, "✅ Беҳтарин! Шумо калимаро дуруст навиштед.");
+            setTimeout(() => {
+                writeIndex++;
+                exerciseStep++;
+                isProcessingStep = false;
+                updateExerciseUI();
+            }, 1200);
+        } else {
+            showResult(false, `❌ Хато.`);
+            document.getElementById('writeCorrection').classList.add('show');
+            setTimeout(() => {
+                writeIndex++;
+                exerciseStep++;
+                isProcessingStep = false;
+                updateExerciseUI();
+            }, 2000);
+        }
+    } else if (exerciseStep === 11) {
+        if (placedWords.length !== sentenceWords.length) return alert("Ҳамаи калимаҳоро ҷойгир кунед!");
+        isProcessingStep = true;
+        if (placedWords.join(' ') === sentenceWords.join(' ')) {
+            exerciseScore++;
+            showResult(true, "✅ Ҷумла дуруст сохта шуд!");
+        } else {
+            showResult(false, "❌ Тартиби калимаҳо нодуруст аст.");
+        }
+        setTimeout(() => {
+            isProcessingStep = false;
+            finishExercises();
+        }, 1500);
+    }
+});
+
+function showResult(isGood, msg) {
+    const box = document.getElementById('resultBox');
+    box.style.display = 'block';
+    box.className = 'result ' + (isGood ? 'good' : 'try');
+    box.textContent = msg;
+    setTimeout(() => { if(isGood) box.style.display = 'none'; }, 1200);
+}
+
+function finishExercises() {
+    document.getElementById('quizBox').innerHTML = "";
+    document.getElementById('writeBox').innerHTML = "";
+    document.getElementById('sentenceTaskBox').innerHTML = "";
+    document.getElementById('resultBox').style.display = 'none';
+
+    const celebration = document.getElementById('celebration');
+    celebration.classList.add('show');
+    celebration.innerHTML = `
+        🎉 Табрик! Шумо ҳамаи машқҳои ин саҳифаро анҷом додед.<br>
+        <strong>Натиҷаи шумо: ${exerciseScore} аз 11 хол</strong><br><br>
+        <button id="sendQuizBtn" class="action-btn primary" style="background:#16a34a; color:#fff; width:100%; margin-top:10px;" onclick="sendQuizResultsToTeacher()">
+            📤 Фиристодани натиҷа ба муаллим
+        </button>
+        <div id="quizSendStatus" style="margin-top:10px; font-weight:bold; font-size:1rem;"></div>
+    `;
+}
+
+// ✅ ФИРИСТОДАНИ НАТИҶА – ИСЛОҲШУДА (action: "send_score")
+function sendQuizResultsToTeacher() {
+    const studentName = checkStudentName();
+    if (!studentName) return;
+
+    const sendBtn = document.getElementById('sendQuizBtn');
+    const statusDiv = document.getElementById('quizSendStatus');
+
+    if (sendBtn) sendBtn.disabled = true;
+    if (statusDiv) {
+        statusDiv.style.color = "#1d4ed8";
+        statusDiv.textContent = "⏳ Натиҷа ба муаллим фиристода шуда истодааст...";
+    }
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+            action: "send_score",           // ← ин амалест, ки сервер ба Telegram мефиристад
+            name: studentName,
+            score: `${exerciseScore} / 11`,
+            readingTitle: `Саҳифаи ${state.page + 1}`
+        })
+    }).then(() => {
+        if (statusDiv) {
+            statusDiv.style.color = "#15803d";
+            statusDiv.textContent = `🎉 Натиҷаи ${exerciseScore}/11 бомуваффақият ба муаллим фиристода шуд!`;
+        }
+        if (sendBtn) sendBtn.style.display = "none";
+    }).catch((err) => {
+        console.error("Хатогӣ:", err);
+        if (statusDiv) {
+            statusDiv.style.color = "#b91c1c";
+            statusDiv.textContent = "❌ Хатогӣ ҳангоми фиристодани натиҷа!";
+        }
+        if (sendBtn) sendBtn.disabled = false;
     });
-}
-
-function placeWord(id) {
-    const item = state.sentenceBank.find((word) => word.id === id);
-    const alreadyUsed = state.sentenceAnswer.some((word) => word.id === id);
-    if (!item || alreadyUsed) return;
-    state.sentenceAnswer.push(item);
-    renderSentence();
-}
-
-function removeWord(id) {
-    state.sentenceAnswer = state.sentenceAnswer.filter((word) => word.id !== id);
-    renderSentence();
-}
-
-function showRound(round) {
-    if (round > state.unlocked) return;
-    state.round = round;
-    document.querySelectorAll(".challenge").forEach((node) => node.classList.remove("active"));
-    document.getElementById(`round${round}`).classList.add("active");
-    renderRounds();
-}
-
-function checkCurrentRound() {
-    if (state.round === 1) checkQuiz();
-    if (state.round === 2) checkWrite();
-    if (state.round === 3) checkSentence();
-    updateProgress();
 }
 
 function checkStudentName() {
@@ -284,78 +445,100 @@ function checkStudentName() {
     return name;
 }
 
-function passRound(percent, nextRound, successText) {
-    const needed = state.round === 2 ? 70 : state.round === 3 ? 100 : 80;
-    const good = percent >= needed;
-    resultBox.className = `result ${good ? "good" : "try"}`;
-    resultBox.innerHTML = good
-        ? `${successText}<br>Натиҷа: ${percent}%`
-        : `Ҳоло каме такрор лозим аст. Натиҷа: ${percent}%. Барои гузаштан ҳадди лозима ${needed}% аст.`;
-
-    if (good && nextRound) {
-        state.unlocked = Math.max(state.unlocked, nextRound);
-        setTimeout(() => showRound(nextRound), 650);
-    }
-
-    if (state.round === 3 && good) {
-        state.completed[state.page] = true;
-        celebration.className = "celebration show";
-        celebration.innerHTML = "Офарин! Ин саҳифа хуб аз худ шуд.";
-
-        const studentName = checkStudentName() || "Аноним / Номаълум";
-        sendTestScoreOnly(studentName, `${percent}%`, pages[state.page].title);
-    }
+function speak(text) {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.88;
+    window.speechSynthesis.speak(utterance);
 }
 
-function checkQuiz() {
-    let score = 0;
-    state.quiz.forEach((q, index) => {
-        if (state.selected[index] === q.item.en) score++;
-    });
-    passRound(Math.round(score / state.quiz.length * 100), 2, "Даври 2 кушода шуд: акнун худатон калимаро нависед.");
+function renderTabs() {
+    const pageTabs = document.getElementById("pageTabs");
+    if (!pageTabs) return;
+    pageTabs.innerHTML = pages.map((page, index) => `
+        <button class="page-tab ${index === state.page ? 'active' : ''}" onclick="changePage(${index})">
+            ${page.title}
+        </button>
+    `).join("");
 }
 
-function checkWrite() {
-    let score = 0;
-    let hasWrong = false;
-    state.write.forEach((item, index) => {
-        const input = document.getElementById(`write${index}`);
-        const correction = document.getElementById(`correction${index}`);
-        
-        const ok = compactEnglish(input.value).toLowerCase() === item.en.toLowerCase();
-        
-        input.style.borderColor = ok ? "#20a464" : "#ef4444";
-        correction.classList.toggle("show", !ok);
-        correction.textContent = ok ? "" : `Ҷавоби дуруст: ${item.en}`;
-        if (ok) score++; else hasWrong = true;
-    });
-    const percent = Math.round(score / state.write.length * 100);
-
-    if (hasWrong) {
-        document.querySelectorAll("#writeBox .write-input").forEach((input) => input.disabled = true);
+function renderPage() {
+    const page = pages[state.page];
+    const wordRows = document.getElementById("wordRows");
+    
+    const readingEl = document.getElementById("readingTextContent");
+    if (readingEl && readingTexts[state.page]) {
+        readingEl.textContent = readingTexts[state.page];
     }
 
-    passRound(percent, 3, "Даври 3 кушода шуд: акнун калимаҳоро бо тартиби дуруст гузоред.");
+    if (!wordRows) return;
+    renderRows(page.items);
+    renderTabs();
+    initExercise();
+}
 
-    if (hasWrong && percent < 70) {
-        resultBox.innerHTML += "<br>Ҷавобҳои дуруст нишон дода шуданд. Барои супоридани дубора “Саволҳои нав”-ро зер кунед.";
+function renderRows(items) {
+    const wordRows = document.getElementById("wordRows");
+    if (!wordRows) return;
+    wordRows.innerHTML = items.map((item, index) => `
+        <div class="word-card-item">
+            <div class="word-card-top">
+                <div class="word-card-title">
+                    <span class="num">${index + 1}.</span>
+                    <span class="eng">${item.en}</span>
+                </div>
+                <div class="audio-actions">
+                    <button class="speak" onclick="speak('${item.en.replace(/'/g, "\\'")}')" title="Шунидани талафуз">🔊</button>
+                    <button class="mic-btn" onclick="testPronunciation('${item.en.replace(/'/g, "\\'")}', 'status_${index}')" title="Талаффузи худро санҷед">🎤</button>
+                </div>
+            </div>
+            <div class="word-card-body">
+                <span class="pron">[${item.pr}]</span> — <span class="tg-word"><strong>${item.tg}</strong></span>
+            </div>
+            <div class="example">💬 ${item.ex}</div>
+            <div class="voice-feedback" id="status_${index}"></div>
+        </div>
+    `).join("");
+}
+
+function testPronunciation(targetWord, elementId) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const statusBox = document.getElementById(elementId);
+
+    if (!SpeechRecognition) {
+        alert("Браузери шумо санҷиши овозиро дастгирӣ намекунад.");
+        return;
     }
-}
 
-function checkSentence() {
-    const expected = state.sentenceTask.en;
-    const answer = state.sentenceAnswer.map((item) => item.text);
-    const rightPlaces = expected.filter((word, index) => answer[index] === word).length;
-    const percent = answer.length === expected.length && rightPlaces === expected.length
-        ? 100
-        : Math.round(rightPlaces / expected.length * 100);
-    passRound(percent, null, "Офарин! Ҷумла пурра дуруст сохта шуд.");
-}
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
 
-function updateProgress() {
-    const current = state.completed[state.page] ? 100 : Math.round((state.unlocked - 1) / 3 * 100);
-    document.getElementById("progressLabel").textContent = `Пешрафт: ${current}%`;
-    document.getElementById("progressMeter").style.width = `${current}%`;
+    statusBox.className = "voice-feedback listening";
+    statusBox.textContent = "🎙 Гӯш карда истодаам, калимаро 100% дақиқ гӯед...";
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+        const spokenWord = event.results[0][0].transcript.toLowerCase().trim();
+        const cleanTarget = targetWord.toLowerCase().trim().replace(/[^a-z0-9 ]/g, '');
+        const cleanSpoken = spokenWord.replace(/[^a-z0-9 ]/g, '');
+
+        if (cleanSpoken === cleanTarget) {
+            statusBox.className = "voice-feedback success";
+            statusBox.innerHTML = `✅ Офарин! Талаффузи 100% дуруст: <b>"${event.results[0][0].transcript}"</b>`;
+        } else {
+            statusBox.className = "voice-feedback error";
+            statusBox.innerHTML = `❌ Хато! Шумо гуфтед: <b>"${event.results[0][0].transcript}"</b> <br>Асли калима/ҷумла: <b>"${targetWord}"</b>`;
+        }
+    };
+
+    recognition.onerror = () => {
+        statusBox.className = "voice-feedback error";
+        statusBox.textContent = "⚠️ Овоз шунида нашуд ё талаффуз нодуруст аст.";
+    };
 }
 
 function changePage(index) {
@@ -364,170 +547,191 @@ function changePage(index) {
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-function speak(text) {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = .88;
-    window.speechSynthesis.speak(utterance);
+let readingMediaRecorder = null;
+let readingAudioChunks = [];
+let readingBase64Audio = null;
+
+async function startReadingRecording() {
+    if (!checkStudentName()) return;
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+        readingMediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        readingAudioChunks = [];
+
+        readingMediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) readingAudioChunks.push(e.data);
+        };
+
+        readingMediaRecorder.onstop = () => {
+            const audioBlob = new Blob(readingAudioChunks, { type: readingMediaRecorder.mimeType || 'audio/webm' });
+            const audioPreview = document.getElementById("audioPreview");
+            const recStatus = document.getElementById("recStatus");
+            const sendVoiceBtn = document.getElementById("sendVoiceBtn");
+
+            audioPreview.src = URL.createObjectURL(audioBlob);
+            audioPreview.style.display = "block";
+
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = function () {
+                readingBase64Audio = reader.result.split(',')[1];
+                if (recStatus) {
+                    recStatus.textContent = "✅ Овоз сабт шуд!";
+                    recStatus.style.color = "#166534";
+                }
+                if (sendVoiceBtn) sendVoiceBtn.style.display = "block";
+            };
+        };
+
+        readingMediaRecorder.start();
+        document.getElementById("startRecBtn").disabled = true;
+        document.getElementById("stopRecBtn").disabled = false;
+        
+        const recStatus = document.getElementById("recStatus");
+        if (recStatus) {
+            recStatus.textContent = "🔴 Сабти овоз рафта истодааст...";
+            recStatus.style.color = "#ef4444";
+        }
+    } catch (err) {
+        alert("Лутфан ба микрофон иҷозат диҳед!");
+    }
 }
 
-searchInput.addEventListener("input", () => {
-    const query = searchInput.value.toLowerCase().trim();
-    const filtered = getPageItems().filter((item) =>
-        item.en.toLowerCase().includes(query) ||
-        item.tg.toLowerCase().includes(query) ||
-        item.pr.toLowerCase().includes(query)
-    );
-    renderRows(filtered);
-});
+function stopReadingRecording() {
+    if (readingMediaRecorder && readingMediaRecorder.state !== "inactive") {
+        readingMediaRecorder.stop();
+        readingMediaRecorder.stream.getTracks().forEach(t => t.stop());
+        document.getElementById("startRecBtn").disabled = false;
+        document.getElementById("stopRecBtn").disabled = true;
+    }
+}
 
-document.getElementById("checkBtn").addEventListener("click", checkCurrentRound);
-document.getElementById("newBtn").addEventListener("click", resetExercises);
-document.getElementById("exerciseJump").addEventListener("click", () => {
-    document.getElementById("exerciseSection").scrollIntoView({ behavior: "smooth" });
-});
+function sendReadingVoice() {
+    const studentName = checkStudentName();
+    if (!studentName || !readingBase64Audio) return alert("⚠️ Лутфан аввал овозро сабт кунед!");
 
-// --- ФУНКСИЯҲОИ ФИРИСТОДАН ---
-
-function sendTestScoreOnly(studentName, scoreText, pageTitle) {
-    const payload = {
-        action: "send_score",    // ✅ ин ҳамон амалест, ки сервер ба Telegram мефиристад
-        name: studentName,
-        score: scoreText,
-        readingTitle: pageTitle
-    };
+    const recStatus = document.getElementById("recStatus");
+    const sendVoiceBtn = document.getElementById("sendVoiceBtn");
+    
+    if (recStatus) recStatus.textContent = "⏳ Маълумот фиристода шуда истодааст...";
+    sendVoiceBtn.disabled = true;
 
     fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-    })
-    .then(() => console.log("Тест фиристода шуд!"))
-    .catch(err => console.error("Хатогӣ:", err));
-}
-
-// --- САБТИ ОВОЗ ВА ФИРИСТОДАН ---
-
-let mediaRecorder = null;
-let audioChunks = [];
-let latestBase64Audio = null;
-
-const startRecBtn = document.getElementById("startRecBtn");
-const stopRecBtn = document.getElementById("stopRecBtn");
-const recStatus = document.getElementById("recStatus");
-const audioPreview = document.getElementById("audioPreview");
-const sendVoiceBtn = document.getElementById("sendVoiceBtn");
-
-if (startRecBtn) {
-    startRecBtn.addEventListener("click", async () => {
-        if (!checkStudentName()) return;
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
-            mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable = e => {
-                if (e.data.size > 0) audioChunks.push(e.data);
-            };
-
-            mediaRecorder.onstop = () => {
-                const blobMime = mediaRecorder.mimeType || 'audio/webm';
-                const audioBlob = new Blob(audioChunks, { type: blobMime });
-                
-                audioPreview.src = URL.createObjectURL(audioBlob);
-                audioPreview.style.display = "block";
-
-                if (recStatus) {
-                    recStatus.textContent = "⏳ Овоз омода шуда истодааст...";
-                    recStatus.style.color = "#d97706";
-                }
-                if (sendVoiceBtn) sendVoiceBtn.style.display = "none";
-
-                const reader = new FileReader();
-                reader.readAsDataURL(audioBlob);
-                reader.onloadend = function () {
-                    latestBase64Audio = reader.result.split(',')[1];
-                    if (recStatus) {
-                        recStatus.textContent = "✅ Овоз сабт шуд! Метавонед гӯш кунед ва фиристед.";
-                        recStatus.style.color = "#166534";
-                    }
-                    if (sendVoiceBtn) {
-                        sendVoiceBtn.style.display = "block";
-                        sendVoiceBtn.disabled = false;
-                    }
-                };
-            };
-
-            mediaRecorder.start();
-            startRecBtn.disabled = true;
-            stopRecBtn.disabled = false;
-            if (sendVoiceBtn) sendVoiceBtn.style.display = "none";
-            if (recStatus) {
-                recStatus.textContent = "🔴 Сабти овоз рафта истодааст...";
-                recStatus.style.color = "#ef4444";
-            }
-        } catch (err) {
-            alert("Лутфан ба микрофон иҷозат диҳед!");
-        }
-    });
-
-    stopRecBtn.addEventListener("click", () => {
-        if (mediaRecorder && mediaRecorder.state !== "inactive") {
-            mediaRecorder.stop();
-            mediaRecorder.stream.getTracks().forEach(t => t.stop());
-            startRecBtn.disabled = false;
-            stopRecBtn.disabled = true;
-        }
-    });
-}
-
-if (sendVoiceBtn) {
-    sendVoiceBtn.addEventListener("click", () => {
-        const studentName = checkStudentName();
-        if (!studentName || !latestBase64Audio) {
-            alert("⚠️ Лутфан аввал овозро сабт кунед!");
-            return;
-        }
-
-        if (recStatus) {
-            recStatus.textContent = "⏳ Овоз ва маълумот фиристода шуда истодааст...";
-            recStatus.style.color = "#d97706";
-        }
-        sendVoiceBtn.disabled = true;
-
-        const payload = {
+        body: JSON.stringify({
             action: "send_voice",
             name: studentName,
-            readingTitle: pages[state.page].title,
-            audioBase64: latestBase64Audio
+            studentName: studentName,
+            readingTitle: `Саҳифаи ${state.page + 1}: Reading`,
+            audioBase64: readingBase64Audio
+        })
+    }).then(() => {
+        if (recStatus) {
+            recStatus.textContent = "🎉 Овоз бо муваффақият ба муаллим фиристода шуд!";
+            recStatus.style.color = "#15803d";
+        }
+        sendVoiceBtn.style.display = "none";
+        readingBase64Audio = null;
+    }).catch(() => {
+        if (recStatus) recStatus.textContent = "❌ Хатогӣ ҳангоми фиристодан!";
+        sendVoiceBtn.disabled = false;
+    });
+}
+
+let topicMediaRecorder = null;
+let topicAudioChunks = [];
+let topicBase64Audio = null;
+
+async function startTopicRecording() {
+    if (!checkStudentName()) return;
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+        topicMediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        topicAudioChunks = [];
+
+        topicMediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) topicAudioChunks.push(e.data);
         };
 
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
+        topicMediaRecorder.onstop = () => {
+            const audioBlob = new Blob(topicAudioChunks, { type: topicMediaRecorder.mimeType || 'audio/webm' });
+            const audioPreview = document.getElementById("topicAudioPreview");
+            const recStatus = document.getElementById("topicRecStatus");
+            const sendVoiceBtn = document.getElementById("topicSendVoiceBtn");
+
+            audioPreview.src = URL.createObjectURL(audioBlob);
+            audioPreview.style.display = "block";
+
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = function () {
+                topicBase64Audio = reader.result.split(',')[1];
+                if (recStatus) {
+                    recStatus.textContent = "✅ Овоз сабт шуд!";
+                    recStatus.style.color = "#166534";
+                }
+                if (sendVoiceBtn) sendVoiceBtn.style.display = "block";
+            };
+        };
+
+        topicMediaRecorder.start();
+        document.getElementById("topicStartRecBtn").disabled = true;
+        document.getElementById("topicStopRecBtn").disabled = false;
+        
+        const recStatus = document.getElementById("topicRecStatus");
+        if (recStatus) {
+            recStatus.textContent = "🔴 Сабти овоз рафта истодааст...";
+            recStatus.style.color = "#ef4444";
+        }
+    } catch (err) {
+        alert("Лутфан ба микрофон иҷозат диҳед!");
+    }
+}
+
+function stopTopicRecording() {
+    if (topicMediaRecorder && topicMediaRecorder.state !== "inactive") {
+        topicMediaRecorder.stop();
+        topicMediaRecorder.stream.getTracks().forEach(t => t.stop());
+        document.getElementById("topicStartRecBtn").disabled = false;
+        document.getElementById("topicStopRecBtn").disabled = true;
+    }
+}
+
+function sendTopicVoice() {
+    const studentName = checkStudentName();
+    if (!studentName || !topicBase64Audio) return alert("⚠️ Лутфан аввал овозро сабт кунед!");
+
+    const recStatus = document.getElementById("topicRecStatus");
+    const sendVoiceBtn = document.getElementById("topicSendVoiceBtn");
+    
+    if (recStatus) recStatus.textContent = "⏳ Маълумот фиристода шуда истодааст...";
+    sendVoiceBtn.disabled = true;
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+            action: "send_voice",
+            name: studentName,
+            studentName: studentName,
+            readingTitle: `Мавзӯи махсус: ${specialTopics[state.activeTopicIndex].title}`,
+            audioBase64: topicBase64Audio
         })
-        .then(() => {
-            if (recStatus) {
-                recStatus.textContent = "🎉 Овоз фиристода шуд ва ба Google Sheets рафт!";
-                recStatus.style.color = "#15803d";
-            }
-            sendVoiceBtn.style.display = "none";
-            latestBase64Audio = null;
-        })
-        .catch(err => {
-            console.error("Хатогӣ:", err);
-            if (recStatus) {
-                recStatus.textContent = "❌ Хатогӣ ҳангоми фиристодани овоз!";
-                recStatus.style.color = "#dc2626";
-            }
-            sendVoiceBtn.disabled = false;
-        });
+    }).then(() => {
+        if (recStatus) {
+            recStatus.textContent = "🎉 Овоз бо муваффақият ба муаллим фиристода шуд!";
+            recStatus.style.color = "#15803d";
+        }
+        sendVoiceBtn.style.display = "none";
+        topicBase64Audio = null;
+    }).catch(() => {
+        if (recStatus) recStatus.textContent = "❌ Хатогӣ ҳангоми фиристодан!";
+        sendVoiceBtn.disabled = false;
     });
 }
 
