@@ -211,30 +211,44 @@ body {
     transform: rotate(1.5deg);
 }
 
-.table-wrap {
-    overflow-x: auto;
+/* =========================================================
+   СТРАКТУРАИ КОРТҲОИ ЛУҒАТ (ҒАЙРИҶАДВАЛӢ)
+   ========================================================= */
+.cards-grid-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
     margin-bottom: 20px;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
+.word-card-item {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-table th {
-    background: #f1f5f9;
-    color: #1e293b;
-    padding: 10px 8px;
-    text-align: left;
-    font-weight: 900;
-    border-bottom: 2px solid #cbd5e1;
+.word-card-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: var(--blue);
 }
 
-table td {
-    padding: 8px 8px;
-    border-bottom: 1px solid #e2e8f0;
-    vertical-align: middle;
+.word-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.word-card-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .num {
@@ -243,8 +257,59 @@ table td {
 }
 
 .eng {
-    font-weight: 900;
     color: #16734b;
+    font-weight: 900;
+    font-size: 1.15rem;
+}
+
+.audio-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.speak {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: #e8f3ff;
+    color: #1b6fb8;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.speak:hover {
+    transform: scale(1.1);
+    background: #d0e5ff;
+}
+
+.mic-btn {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: #fef3c7;
+    color: #d97706;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.mic-btn:hover {
+    transform: scale(1.1);
+    background: #fde68a;
+}
+
+.word-card-body {
+    font-size: 1rem;
 }
 
 .pron {
@@ -254,26 +319,43 @@ table td {
 
 .example {
     color: #334155;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.92rem;
+    background: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 6px;
 }
 
-.speak {
-    margin-left: 8px;
-    background: #e8f3ff;
-    border: none;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    cursor: pointer;
-    color: #1b6fb8;
-    font-size: 0.8rem;
-    transition: transform 0.2s;
+.voice-feedback {
+    font-size: 0.85rem;
+    font-weight: 800;
+    margin-top: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: none;
 }
 
-.speak:hover {
-    transform: scale(1.1);
+.voice-feedback.listening {
+    display: block;
+    background: #e0f2fe;
+    color: #0369a1;
 }
 
+.voice-feedback.success {
+    display: block;
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.voice-feedback.error {
+    display: block;
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* =========================================================
+   БАХШИ МАШҚҲО ВА ТЕСТ
+   ========================================================= */
 .note {
     display: inline-block;
     margin: 22px 0 8px;
@@ -387,7 +469,8 @@ table td {
     background: #e8f3ff;
 }
 
-.write-input {
+.write-input,
+.sentence-input {
     width: 100%;
     min-height: 44px;
     border: 2px solid #dbe5ef;
@@ -425,6 +508,25 @@ table td {
     color: #7c2d12;
 }
 
+.answer-line {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 14px;
+    padding: 10px;
+    border: 2px dashed #b8c7d8;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .78);
+}
+
+.answer-line.empty::before {
+    content: "Калимаҳои интихобшуда ин ҷо пайдо мешаванд";
+    color: #8492a6;
+    font-weight: 900;
+}
+
 .word-bank {
     display: flex;
     flex-wrap: wrap;
@@ -457,25 +559,6 @@ table td {
     background: #dcfce7;
     border-color: rgba(22, 101, 52, .25);
     color: #14532d;
-}
-
-.answer-line {
-    min-height: 56px;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 10px 0 14px;
-    padding: 10px;
-    border: 2px dashed #b8c7d8;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, .78);
-}
-
-.answer-line.empty::before {
-    content: "Калимаҳои интихобшуда ин ҷо пайдо мешаванд";
-    color: #8492a6;
-    font-weight: 900;
 }
 
 .actions {
