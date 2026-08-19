@@ -221,6 +221,10 @@ body {
     margin-bottom: 20px;
 }
 
+.word-list-hidden {
+    display: none !important;
+}
+
 .word-card-item {
     background: #ffffff;
     border: 2px solid #e2e8f0;
